@@ -130,7 +130,7 @@ class Board:
         for player in self.players:
             if player.penalty < lowest:
                 winners = []
-                winners.append(player.name1)
+                winners.append(player.name)
             elif player.penalty == lowest:
                 winners.append(player.name)
         return winners
