@@ -134,6 +134,10 @@ class Board:
             elif player.penalty == lowest:
                 winners.append(player.name)
         return winners
+
+    #def GetTurnReward(self):
+        
+    #def Step(self):
         
     def CalcTurnPen(self, penaltyCards):
         penalty = 0
