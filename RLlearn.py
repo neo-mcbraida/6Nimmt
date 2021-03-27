@@ -106,8 +106,8 @@ loss_function = keras.losses.Huber()
 while True:  # Run until solved
     state = nimmt6.env.Reset()
     episode_reward = 0
-
-    for timestep in range(1, max_steps_per_episode):
+    print(episode_count)
+    for timestep in range(1, max_steps_per_episode):#max steps per game is 10 CHANGE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # env.render(); Adding this line would show the attempts
         # of the agent in a pop up window.
         frame_count += 1
@@ -116,7 +116,7 @@ while True:  # Run until solved
         if frame_count < epsilon_random_frames or epsilon > np.random.rand(1)[0]:
             # Take random action
             action = np.random.choice(num_actions)
-            print(action)
+            #print(action)
         else:
             # Predict action Q-values
             # From environment state
@@ -125,7 +125,7 @@ while True:  # Run until solved
             action_probs = model(state_tensor, training=False)
             # Take best action
             action = tf.argmax(action_probs[0]).numpy()
-            print(action)
+            #print(action)
 
         # Decay probability of taking random action
         epsilon -= epsilon_interval / epsilon_greedy_frames
@@ -146,7 +146,7 @@ while True:  # Run until solved
         state = state_next
         
         
-        print(state)
+        #print(state)
         # Update every fourth frame and once batch size is over 32
         if frame_count % update_after_actions == 0 and len(done_history) > batch_size:
 

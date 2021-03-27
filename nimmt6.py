@@ -19,15 +19,15 @@ class Board:
 
     def GetCards(self):
         self.p2.RandomSelect()
-        print(self.p2.selected)
+        #print(self.p2.selected)
         self.p3.RandomSelect()
-        print(self.p3.selected)
+        #print(self.p3.selected)
         self.p4.RandomSelect()
-        print(self.p4.selected)
+        #print(self.p4.selected)
         self.p5.RandomSelect()
-        print(self.p5.selected)
+        #print(self.p5.selected)
         self.p6.RandomSelect()
-        print(self.p6.selected)
+        #print(self.p6.selected)
 
     def SortCards(self):
         self.players.sort(key=lambda x: x.selected)
@@ -276,10 +276,10 @@ class Hand:
     def AiSelect(self, index):
         if index >= len(self.cards):
             self.selected = 0
-            print(self.selected)
+            #print(self.selected)
         else:
             self.selected = self.cards[index]
-            print(self.selected)
+            #print(self.selected)
             del self.cards[index]
 
 env = Board()
