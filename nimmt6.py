@@ -1,42 +1,23 @@
 import random
+import numpy as np
 
 class Board:
     def __init__(self):
-        self.handNum = 0
-       # self.cards = range (1, 104)
-        self.pHolder = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104]
-        self.cards = []
-        self.played = []
-        self.deck1 = []
-        self.deck2 = []
-        self.deck3 = []
-        self.deck4 = []
-        self.decks = [self.deck1, self.deck2, self.deck3, self.deck4]
-        self.p1 = Hand('p1')
-        self.p2 = Hand('p2')
-        self.p3 = Hand('p3')
-        self.p4 = Hand('p4')
-        self.p5 = Hand('p5')
-        self.p6 = Hand('p6')
-        self.players = [self.p1, self.p2, self.p3, self.p4, self.p5, self.p6]
-        self.p1TurnPen = 0
+        self.Reset()
 
     def Mix(self):
         random.shuffle(self.cards)
-        _cards = [[], [], [], [], [], [], [], [], [], []]
         self.deck1.append(self.cards[0])
         self.deck2.append(self.cards[1])
         self.deck3.append(self.cards[2])
         self.deck4.append(self.cards[3])
         del self.cards[:4]
         for i in range(6):
+            self.players[i].Reset()
             self.players[i].cards = self.cards[:10]
-            _cards[i] = self.cards[:10]
             del self.cards[:10]
-        self.cards = _cards
 
     def GetCards(self):
-        self.p1.PlayerSelect()
         self.p2.RandomSelect()
         print(self.p2.selected)
         self.p3.RandomSelect()
@@ -55,6 +36,7 @@ class Board:
         print(self.decks)
         print(self.p1.penaltyCards)
         print(self.p1.cards)
+        self.p1.PlayerSelect()
         self.GetCards()
         self.SortCards()#rearranges self.players in order or card number
         self.PlaceCard()
@@ -73,12 +55,11 @@ class Board:
         temp4 = self.AddZeroes(self.deck4)
         tempplayer = self.AddZeroes(self.p1.cards)
         state = [temp1, temp2, temp3, temp4, tempplayer]
-        self.GetTurnReward()
         return state
 
     def AddZeroes(self, array):
-        temp = array
-        num = 10 - len(array)
+        temp = array.copy()
+        num = 10 - len(temp)
         i = 0
         while i < num:
             temp.append(0)
@@ -160,8 +141,14 @@ class Board:
                 winners.append(player.name)
         return winners
 
-    def GetTurnReward(self):
-         return self.p1.CalcTurnPen(self.p1.tempPickUp)
+    def GetTurnReward(self, won):#may need adjusting based on how well deep learning works
+        reward = 5
+        penalty = self.p1.CalcTurnPen(self.p1.tempPickUp)
+        if penalty != 0:
+            reward = penalty * - 2
+        if won == True:
+            reward += 50
+        return reward
 
     def CalcTurnPen(self, penaltyCards):
         penalty = 0
@@ -179,19 +166,71 @@ class Board:
                 penalty += 1
         return penalty
 
+    #Method to let Model train against random inputs
+    def StepRand(self, cardInd):
+        self.p1.AiSelect(cardInd)
+        if self.p1.selected == 0:
+            nextState = np.array(self.GetState())
+            reward = -80 #discourage agent choosing card that doesnt rlly exist
+            done = False
+            return nextState, reward, done
+        else:
+            if len(self.p1.cards) == 0:
+                nextState = np.array(self.GetState())
+                self.PlayerGetPen()#all players calculate their penalty
+                #winners = self.GetWinner()#returns player with highest penalt
+                reward = self.GetTurnReward(True)
+                return nextState, reward, True
+            else:
+                self.GetCards()
+                self.SortCards()
+                self.PlaceCard()
+                nextState = np.array(self.GetState())
+                reward = self.GetTurnReward(False)
+                return nextState, reward, False
+
+    #Method to let Model train against itself
+    #def TurnSelf(self):
+
+    def Reset(self):
+        self.cards = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104]
+        #self.cards = []
+        self.played = []
+        self.deck1 = []
+        self.deck2 = []
+        self.deck3 = []
+        self.deck4 = []
+        self.decks = [self.deck1, self.deck2, self.deck3, self.deck4]
+        self.p1 = Hand('p1')
+        self.p2 = Hand('p2')
+        self.p3 = Hand('p3')
+        self.p4 = Hand('p4')
+        self.p5 = Hand('p5')
+        self.p6 = Hand('p6')
+        self.players = [self.p1, self.p2, self.p3, self.p4, self.p5, self.p6]
+        self.Mix()
+        state = np.array(self.GetState())
+        return state
+
 class Hand:
     def __init__(self, _name):
-        self.tempPickUp = []
         self.name = _name
+        self.Reset()
+    
+    def Reset(self):
+        self.tempPickUp = []
         self.cards = []
         self.penaltyCards = []
         self.penalty = 0
         self.selected = 0
 
     def RandomSelect(self):
-        n = random.randint(0, (len(self.cards)- 1))
-        self.selected = self.cards[n]
-        del self.cards[n]
+        #print(self.cards)
+        #n = random.randint(0, (len(self.cards) -1))#removed - 1
+        #if len(self.cards) == 0:
+           # x = 1
+        self.selected = self.cards[0]
+        del self.cards[0]
 
     def PlayerSelect(self):
         n = int(input("enter card you want to play")) - 1
@@ -234,5 +273,14 @@ class Hand:
         penaltyCards = []
         return penalty
 
+    def AiSelect(self, index):
+        if index >= len(self.cards):
+            self.selected = 0
+            print(self.selected)
+        else:
+            self.selected = self.cards[index]
+            print(self.selected)
+            del self.cards[index]
+
 env = Board()
-env.StartGame()
+#env.StartGame()

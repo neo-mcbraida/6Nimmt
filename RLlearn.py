@@ -2,7 +2,6 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-
 import nimmt6
 
 # Configuration paramaters for the whole setup
@@ -35,7 +34,7 @@ num_actions = 10
 
 
 def create_q_model():
-    inputs = inputs = layers.Input(shape=(2))
+    inputs = inputs = layers.Input(shape=(None, 32, 5, 10))
 
     layer1 = layers.Dense(16, activation="relu")(inputs)
     layer2 = layers.Dense(16, activation="relu")(layer1)
@@ -103,12 +102,8 @@ update_target_network = 10000
 # Using huber loss for stability
 loss_function = keras.losses.Huber()
 
-def Step():
-    nimmt6.env.GetState()
-    nimmt6.env.Turn()
-
 while True:  # Run until solved
-    state = np.array(nimmt6.env.StartGame())
+    state = nimmt6.env.Reset()
     episode_reward = 0
 
     for timestep in range(1, max_steps_per_episode):
@@ -120,6 +115,7 @@ while True:  # Run until solved
         if frame_count < epsilon_random_frames or epsilon > np.random.rand(1)[0]:
             # Take random action
             action = np.random.choice(num_actions)
+            print(action)
         else:
             # Predict action Q-values
             # From environment state
@@ -128,14 +124,15 @@ while True:  # Run until solved
             action_probs = model(state_tensor, training=False)
             # Take best action
             action = tf.argmax(action_probs[0]).numpy()
+            print(action)
 
         # Decay probability of taking random action
         epsilon -= epsilon_interval / epsilon_greedy_frames
         epsilon = max(epsilon, epsilon_min)
 
         # Apply the sampled action in our environment
-        state_next, reward, done, _ = env.step(action)#done, bool, representation of one move
-        state_next = np.array(state_next)
+        state_next, reward, done = nimmt6.env.StepRand(action)#done, bool, representation of one move
+        #state_next = np.array(state_next)
 
         episode_reward += reward
 
@@ -146,7 +143,9 @@ while True:  # Run until solved
         done_history.append(done)
         rewards_history.append(reward)
         state = state_next
-
+        
+        
+        print(state)
         # Update every fourth frame and once batch size is over 32
         if frame_count % update_after_actions == 0 and len(done_history) > batch_size:
 
