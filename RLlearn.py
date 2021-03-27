@@ -34,8 +34,9 @@ num_actions = 10
 
 
 def create_q_model():
-    inputs = inputs = layers.Input(shape=(None, 32, 5, 10))
-
+    inputs = layers.Input(shape=(5, 10))
+    #inputs = layers.InputLayer(batch_input_shape=(32, 5, 10,))
+    #add masking
     layer1 = layers.Dense(16, activation="relu")(inputs)
     layer2 = layers.Dense(16, activation="relu")(layer1)
     layer3 = layers.Dense(16, activation="relu")(layer2)
@@ -165,9 +166,7 @@ while True:  # Run until solved
             # Use the target model for stability
             future_rewards = model_target.predict(state_next_sample)
             # Q value = reward + discount factor * expected future reward
-            updated_q_values = rewards_sample + gamma * tf.reduce_max(
-                future_rewards, axis=1
-            )
+            updated_q_values = rewards_sample + gamma * tf.reduce_max(future_rewards, axis=None)
 
             # If final frame set the last value to -1
             updated_q_values = updated_q_values * (1 - done_sample) - done_sample
@@ -178,9 +177,11 @@ while True:  # Run until solved
             with tf.GradientTape() as tape:
                 # Train the model on the states and updated Q-values
                 q_values = model(state_sample)
-
+                #print(model(state_sample))
                 # Apply the masks to the Q-values to get the Q-value for action taken
-                q_action = tf.reduce_sum(tf.multiply(q_values, masks), axis=1)
+                #q_action = tf.reduce_sum(tf.multiply(q_values, masks), axis=2)
+                
+                q_action = tf.reduce_sum(q_values)
                 # Calculate loss between new Q-value and old Q-value
                 loss = loss_function(updated_q_values, q_action)
 
