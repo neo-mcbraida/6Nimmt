@@ -19,8 +19,8 @@ class Board:
         self.p5 = Hand('p5')
         self.p6 = Hand('p6')
         self.players = [self.p1, self.p2, self.p3, self.p4, self.p5, self.p6]
-        
-        
+        self.p1TurnPen = 0
+
     def Mix(self):
         random.shuffle(self.cards)
         _cards = [[], [], [], [], [], [], [], [], [], []]
@@ -35,18 +35,21 @@ class Board:
             del self.cards[:10]
         self.cards = _cards
 
-
     def GetCards(self):
         self.p1.PlayerSelect()
         self.p2.RandomSelect()
+        print(self.p2.selected)
         self.p3.RandomSelect()
+        print(self.p3.selected)
         self.p4.RandomSelect()
+        print(self.p4.selected)
         self.p5.RandomSelect()
+        print(self.p5.selected)
         self.p6.RandomSelect()
-    
+        print(self.p6.selected)
+
     def SortCards(self):
         self.players.sort(key=lambda x: x.selected)
-        
 
     def Turn(self):
         print(self.decks)
@@ -63,9 +66,29 @@ class Board:
         else:
             self.Turn()
 
+    def GetState(self):
+        temp1 = self.AddZeroes(self.deck1)
+        temp2 = self.AddZeroes(self.deck2)
+        temp3 = self.AddZeroes(self.deck3)
+        temp4 = self.AddZeroes(self.deck4)
+        tempplayer = self.AddZeroes(self.p1.cards)
+        state = [temp1, temp2, temp3, temp4, tempplayer]
+        self.GetTurnReward()
+        return state
+
+    def AddZeroes(self, array):
+        temp = array
+        num = 10 - len(array)
+        i = 0
+        while i < num:
+            temp.append(0)
+            i += 1
+        return temp
+
     def StartGame(self):
         self.cards = self.pHolder
         self.Mix()
+        #return self.GetState()
         self.Turn()
 
     def SelectDeck(self, card):
@@ -79,10 +102,11 @@ class Board:
                     difMinIndex = i
                     difMin = tempDifMin
         return difMinIndex
-        
+
     def GivePenalty(self, player, deck):
         for card in deck[:-1]:
             player.penaltyCards.append(card)
+            player.tempPickUp.append(card)
         del deck[:-1]
 
     def PlaceCard(self):
@@ -91,12 +115,14 @@ class Board:
             index = self.SelectDeck(card)
             deck = self.decks[index]
             self.AddToRow(deck, index, card, player)
-            
+
     def PickUp(self, index, player, card):
         for c in self.decks[index]:
             player.penaltyCards.append(c)
+            player.tempPickUp.append(c)
+
         self.decks[index] = []
-        self.decks[index].append(card)     
+        self.decks[index].append(card)
 
     def AddToRow(self, deck, index, card, player):
         if index == -1:
@@ -117,7 +143,6 @@ class Board:
             if lowestPen > deckPen:
                 deckIndex = i
                 lowestPen = deckPen
-
         return deckIndex
 
     def PlayerGetPen(self):
@@ -135,10 +160,9 @@ class Board:
                 winners.append(player.name)
         return winners
 
-    #def GetTurnReward(self):
-        
-    #def Step(self):
-        
+    def GetTurnReward(self):
+         return self.p1.CalcTurnPen(self.p1.tempPickUp)
+
     def CalcTurnPen(self, penaltyCards):
         penalty = 0
         for card in penaltyCards:
@@ -157,12 +181,12 @@ class Board:
 
 class Hand:
     def __init__(self, _name):
+        self.tempPickUp = []
         self.name = _name
         self.cards = []
         self.penaltyCards = []
         self.penalty = 0
         self.selected = 0
-
 
     def RandomSelect(self):
         n = random.randint(0, (len(self.cards)- 1))
@@ -193,10 +217,22 @@ class Hand:
                 self.penalty += 2
             else:
                 self.penalty += 1
-    
 
-b = Board()
-b.StartGame()
+    def CalcTurnPen(self, penaltyCards):
+        penalty = 0
+        for card in penaltyCards:
+            if card == 55:
+                penalty += 7
+            elif (card % 11) == 0:
+                penalty += 5
+            elif (card % 10) == 0:
+                penalty += 3
+            elif (card % 5) == 0:
+                penalty += 2
+            else:
+                penalty += 1
+        penaltyCards = []
+        return penalty
 
-
-        
+env = Board()
+env.StartGame()
