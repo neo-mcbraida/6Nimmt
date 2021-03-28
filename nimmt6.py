@@ -1,8 +1,11 @@
 import random
 import numpy as np
 
+import AIOpponent
+
 class Board:
     def __init__(self):
+        self.epSinceUpdate = 0
         self.Reset()
 
     def Mix(self):
@@ -19,19 +22,31 @@ class Board:
 
     def GetCards(self):
         #print(self.p1.selected)
-        self.p2.RandomSelect()
+        tempstate = self.GetState(self.p2)
+        self.p2.AIOpSelect(tempstate)
         #print(self.p2.selected)
-        self.p3.RandomSelect()
+        tempstate = self.GetState(self.p3)
+        self.p3.AIOpSelect(tempstate)
         #print(self.p3.selected)
-        self.p4.RandomSelect()
+        tempstate = self.GetState(self.p4)
+        self.p4.AIOpSelect(tempstate)
         #print(self.p4.selected)
-        self.p5.RandomSelect()
+        tempstate = self.GetState(self.p5)
+        self.p5.AIOpSelect(tempstate)
         #print(self.p5.selected)
-        self.p6.RandomSelect()
+        tempstate = self.GetState(self.p6)
+        self.p6.AIOpSelect(tempstate)
         #print(self.p6.selected)
 
     def SortCards(self):
         self.players.sort(key=lambda x: x.selected)
+
+    def CheckOpUpdate(self):
+        if self.epSinceUpdate == 5000:
+            AIOpponent.OpUpdateModel()
+            self.epSinceUpdate = 0
+        else:
+            self.epSinceUpdate += 1
 
     def Turn(self):
         print(self.decks)
@@ -49,7 +64,7 @@ class Board:
         else:
             self.Turn()
 
-    def GetState(self):
+    def GetState(self, player):
         temp1 = self.AddZeroes(self.deck1)
         self.AddNegOne(temp1)
         temp2 = self.AddZeroes(self.deck2)
@@ -58,7 +73,7 @@ class Board:
         self.AddNegOne(temp3)
         temp4 = self.AddZeroes(self.deck4)
         self.AddNegOne(temp4)
-        tempplayer = self.AddZeroes(self.p1.cards)
+        tempplayer = self.AddZeroes(player.cards)
         state = [temp1, temp2, temp3, temp4, tempplayer]
         #print(state)
         return state
@@ -177,8 +192,9 @@ class Board:
     #Method to let Model train against random inputs
     def StepRand(self, cardInd):
         self.p1.AiSelect(cardInd)
+        self.CheckOpUpdate()
         if self.p1.selected == 0:
-            nextState = np.array(self.GetState())
+            nextState = np.array(self.GetState(self.p1))
             reward = -80 #discourage agent choosing card that doesnt rlly exist
             done = False
             return nextState, reward, done
@@ -194,7 +210,7 @@ class Board:
             self.SortCards()
             self.PlaceCard()
             self.SetDeck()
-            nextState = np.array(self.GetState())
+            nextState = np.array(self.GetState(self.p1))
             reward = self.GetTurnReward()
             if len(self.p1.cards) == 0:
                 #nextState = np.array(self.GetState())
@@ -231,7 +247,7 @@ class Board:
         self.p6 = Hand('p6')
         self.players = [self.p1, self.p2, self.p3, self.p4, self.p5, self.p6]
         self.Mix()
-        state = np.array(self.GetState())
+        state = np.array(self.GetState(self.p1))
         return state
 
 class Hand:
@@ -303,6 +319,15 @@ class Hand:
             self.selected = self.cards[index]
             #print(self.selected)
             del self.cards[index]
+
+    def AIOpSelect(self, state):
+        card = 0
+        while card == 0:
+            index = AIOpponent.AIMove(state)
+            if index < len(self.cards):
+                card = self.cards[index]
+        self.selected = card
+        
 
 env = Board()
 #env.StartGame()

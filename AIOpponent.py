@@ -3,26 +3,25 @@ import os
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+import numpy as np
 
 checkpoint_path = "Weights.ckpt"
 checkpoint_dir = os.path.dirname(checkpoint_path)
 
 num_actions = 10
 
-def create_q_model():
-    inputs = layers.Input(shape=(5, 10))
-    #add masking
-    layer1 = layers.Dense(64, activation="relu")(inputs)#Hopefully to estimate penalty of each deck
-    layer2 = layers.Dense(64, activation="relu")(layer1)#Hopefully to estimate which will be picked up 
-    layer3 = layers.Dense(32, activation="relu")(layer2)#Hopefully to estimate which card is closest to best deck
-    layer4 = layers.Dense(16, activation="relu")(layer3)#Hopefully to estimate best card
+model = tf.keras.models.load_model("Weights.h5") 
 
-    action = layers.Dense(num_actions, activation="linear")(layer4)
+def OpUpdateModel():
+    model = tf.keras.models.load_model("Weights.h5") 
 
-    return keras.Model(inputs=inputs, outputs=action)
+def AIMove(state):
+    state_tensor = tf.convert_to_tensor(state)
+    state_tensor = tf.expand_dims(state_tensor, 0)
+    action_probs = model(state_tensor, training=False)
+    # Take best action
+    action = tf.argmax(action_probs[0]).numpy()
+    action = np.argmax(action)
+    return action
 
-Opp = create_q_model()
-
-# Loads the weights
-Opp.load_weights(checkpoint_path)
 
