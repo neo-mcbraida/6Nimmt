@@ -5,6 +5,9 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 import nimmt6
+#from keras import load_model
+
+import random
 
 # Configuration paramaters for the whole setup
 seed = 42
@@ -35,17 +38,21 @@ is chosen by selecting the larger of the four Q-values predicted in the output l
 num_actions = 10
 
 
-def create_q_model():
-    inputs = layers.Input(shape=(5, 10))
+#def create_q_model():
+    #inputs = layers.Input(shape=(5, 10))
     #add masking
-    layer1 = layers.Dense(64, activation="relu")(inputs)#Hopefully to estimate penalty of each deck
-    layer2 = layers.Dense(64, activation="relu")(layer1)#Hopefully to estimate which will be picked up 
-    layer3 = layers.Dense(32, activation="relu")(layer2)#Hopefully to estimate which card is closest to best deck
-    layer4 = layers.Dense(16, activation="relu")(layer3)#Hopefully to estimate best card
+    #layer1 = layers.Dense(64, activation="relu")(inputs)#Hopefully to estimate penalty of each deck
+    #layer2 = layers.Dense(64, activation="relu")(layer1)#Hopefully to estimate which will be picked up 
+    #layer3 = layers.Dense(32, activation="relu")(layer2)#Hopefully to estimate which card is closest to best deck
+    #layer4 = layers.Dense(16, activation="relu")(layer3)#Hopefully to estimate best card
 
-    action = layers.Dense(num_actions, activation="linear")(layer4)
+    #action = layers.Dense(num_actions, activation="linear")(layer4)
 
-    return keras.Model(inputs=inputs, outputs=action)
+    #return keras.Model(inputs=inputs, outputs=action)
+
+
+
+
     # Network defined by the Deepmind paper
     #inputs = layers.Input(shape=(5, 10))
 
@@ -64,14 +71,14 @@ def create_q_model():
 
 # The first model makes the predictions for Q-values which are used to
 # make a action.
-model = create_q_model()
+#model = create_q_model()
 # Build a target model for the prediction of future rewards.
 # The weights of a target model get updated every 10000 steps thus when the
 # loss between the Q-values is calculated the target Q-value is stable.
-model_target = create_q_model()
+#model_target = create_q_model()
 
 
-model.summary()
+#model.summary()
 """
 ## Train
 """
@@ -105,15 +112,18 @@ loss_function = keras.losses.Huber()
 # Saves model every 2,000 episodes
 eps_since_save = 0
 
-checkpoint_path = "Weights.ckpt"
-checkpoint_target_path = "Weights_Target.ckpt"
+checkpoint_path = "Weights.h5"
+checkpoint_target_path = "Weights_Target.h5"
 
 # Create a callback that saves the model's weights
 cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, save_weights_only=True, verbose=1)
 
 # Loads the weights
-model.load_weights(checkpoint_path)
-model_target.load_weights(checkpoint_target_path)
+model = tf.keras.models.load_model("Weights.h5")   # model.load_weights(checkpoint_path)
+model_target = tf.keras.models.load_model("Weights_Target.h5")#model_target.load_weights(checkpoint_target_path)
+
+model.summary()
+val = 10
 
 while True:  # Run until solved
     state = nimmt6.env.Reset()
@@ -125,9 +135,11 @@ while True:  # Run until solved
         frame_count += 1
 
         # Use epsilon-greedy for exploration
+        num = random.randint(0, val)
         if frame_count < epsilon_random_frames or epsilon > np.random.rand(1)[0]:
             # Take random action
             action = np.random.choice(num_actions)
+            val += 1
             #print(action)
         else:
             # Predict action Q-values
@@ -231,9 +243,9 @@ while True:  # Run until solved
     episode_count += 1
     eps_since_save += 1
 
-    if eps_since_save == 10_000:
-        model.save_weights(checkpoint_path.format(epoch=0))
-        model_target.save_weights(checkpoint_target_path.format(epoch=0))
+    if eps_since_save == 500:
+        model.save("Weights.h5")
+        model_target.save("Weights_Target.h5")
         eps_since_save = 0
         print("saved")
         
