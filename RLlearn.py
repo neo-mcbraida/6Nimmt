@@ -148,7 +148,7 @@ while True:  # Run until solved
             state_tensor = tf.convert_to_tensor(state)
             state_tensor = tf.expand_dims(state_tensor, 0)
             action_probs = model(state_tensor, training=False)
-            print("predicted!")
+            #print("predicted!")
             # Take best action
             action = tf.argmax(action_probs[0]).numpy()
             action = np.argmax(action)
