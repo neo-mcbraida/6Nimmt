@@ -135,8 +135,9 @@ while True:  # Run until solved
         frame_count += 1
 
         # Use epsilon-greedy for exploration
-        num = random.randint(0, val)
+        #num = random.randint(0, 40)
         if frame_count < epsilon_random_frames or epsilon > np.random.rand(1)[0]:
+        #if num == 1:
             # Take random action
             action = np.random.choice(num_actions)
             val += 1
