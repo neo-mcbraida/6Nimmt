@@ -1,0 +1,2 @@
+model_checkpoint_path: "Weights_Target.ckpt"
+all_model_checkpoint_paths: "Weights_Target.ckpt"

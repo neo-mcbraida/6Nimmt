@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
@@ -35,15 +37,13 @@ num_actions = 10
 
 def create_q_model():
     inputs = layers.Input(shape=(5, 10))
-    #inputs = layers.InputLayer(batch_input_shape=(32, 5, 10,))
     #add masking
-    layer1 = layers.Dense(16, activation="relu")(inputs)
-    layer2 = layers.Dense(16, activation="relu")(layer1)
-    layer3 = layers.Dense(16, activation="relu")(layer2)
+    layer1 = layers.Dense(64, activation="relu")(inputs)#Hopefully to estimate penalty of each deck
+    layer2 = layers.Dense(64, activation="relu")(layer1)#Hopefully to estimate which will be picked up 
+    layer3 = layers.Dense(32, activation="relu")(layer2)#Hopefully to estimate which card is closest to best deck
+    layer4 = layers.Dense(16, activation="relu")(layer3)#Hopefully to estimate best card
 
-
-    
-    action = layers.Dense(num_actions, activation="linear")(layer3)
+    action = layers.Dense(num_actions, activation="linear")(layer4)
 
     return keras.Model(inputs=inputs, outputs=action)
     # Network defined by the Deepmind paper
@@ -102,6 +102,18 @@ update_after_actions = 4
 update_target_network = 10000
 # Using huber loss for stability
 loss_function = keras.losses.Huber()
+# Saves model every 2,000 episodes
+eps_since_save = 0
+
+checkpoint_path = "Weights.ckpt"
+checkpoint_target_path = "Weights_Target.ckpt"
+
+# Create a callback that saves the model's weights
+cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, save_weights_only=True, verbose=1)
+
+# Loads the weights
+model.load_weights(checkpoint_path)
+model_target.load_weights(checkpoint_target_path)
 
 while True:  # Run until solved
     state = nimmt6.env.Reset()
@@ -123,10 +135,13 @@ while True:  # Run until solved
             state_tensor = tf.convert_to_tensor(state)
             state_tensor = tf.expand_dims(state_tensor, 0)
             action_probs = model(state_tensor, training=False)
+            print("predicted!")
             # Take best action
             action = tf.argmax(action_probs[0]).numpy()
+            action = np.argmax(action)
             #print(action)
-
+        
+        #print(action)
         # Decay probability of taking random action
         epsilon -= epsilon_interval / epsilon_greedy_frames
         epsilon = max(epsilon, epsilon_min)
@@ -214,7 +229,15 @@ while True:  # Run until solved
     running_reward = np.mean(episode_reward_history)
 
     episode_count += 1
+    eps_since_save += 1
 
-    if running_reward > 40:  # Condition to consider the task solved
-        print("Solved at episode {}!".format(episode_count))
-        break
+    if eps_since_save == 10_000:
+        model.save_weights(checkpoint_path.format(epoch=0))
+        model_target.save_weights(checkpoint_target_path.format(epoch=0))
+        eps_since_save = 0
+        print("saved")
+        
+
+    #if running_reward > 40:  # Condition to consider the task solved
+     #   print("Solved at episode {}!".format(episode_count))
+      #  break

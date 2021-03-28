@@ -18,6 +18,7 @@ class Board:
             del self.cards[:10]
 
     def GetCards(self):
+        #print(self.p1.selected)
         self.p2.RandomSelect()
         #print(self.p2.selected)
         self.p3.RandomSelect()
@@ -43,18 +44,23 @@ class Board:
         if len(self.p1.cards) == 0:
             self.PlayerGetPen()#all players calculate their penalty
             winner = self.GetWinner()#returns player with highest penalty
-            print(winner)
+            #print(winner)
             self.StartGame()
         else:
             self.Turn()
 
     def GetState(self):
         temp1 = self.AddZeroes(self.deck1)
+        self.AddNegOne(temp1)
         temp2 = self.AddZeroes(self.deck2)
+        self.AddNegOne(temp2)
         temp3 = self.AddZeroes(self.deck3)
+        self.AddNegOne(temp3)
         temp4 = self.AddZeroes(self.deck4)
+        self.AddNegOne(temp4)
         tempplayer = self.AddZeroes(self.p1.cards)
         state = [temp1, temp2, temp3, temp4, tempplayer]
+        #print(state)
         return state
 
     def AddZeroes(self, array):
@@ -66,8 +72,12 @@ class Board:
             i += 1
         return temp
 
+    def AddNegOne(self, array):
+        if array[4] == 0:
+            array[4] = -1
+
     def StartGame(self):
-        self.cards = self.pHolder
+        #self.cards = self.pHolder
         self.Mix()
         #return self.GetState()
         self.Turn()
@@ -141,13 +151,11 @@ class Board:
                 winners.append(player.name)
         return winners
 
-    def GetTurnReward(self, won):#may need adjusting based on how well deep learning works
+    def GetTurnReward(self):#may need adjusting based on how well deep learning works
         reward = 5
         penalty = self.p1.CalcTurnPen(self.p1.tempPickUp)
         if penalty != 0:
             reward = penalty * - 2
-        if won == True:
-            reward += 50
         return reward
 
     def CalcTurnPen(self, penaltyCards):
@@ -175,22 +183,36 @@ class Board:
             done = False
             return nextState, reward, done
         else:
+            #if len(self.p1.cards) == 0:
+               # nextState = np.array(self.GetState())
+               # self.PlayerGetPen()#all players calculate their penalty
+                #winners = self.GetWinner()#returns player with highest penalt
+               # reward = self.GetTurnReward(True)
+               # return nextState, reward, True
+            #else:
+            self.GetCards()
+            self.SortCards()
+            self.PlaceCard()
+            self.SetDeck()
+            nextState = np.array(self.GetState())
+            reward = self.GetTurnReward()
             if len(self.p1.cards) == 0:
-                nextState = np.array(self.GetState())
+                #nextState = np.array(self.GetState())
                 self.PlayerGetPen()#all players calculate their penalty
                 #winners = self.GetWinner()#returns player with highest penalt
-                reward = self.GetTurnReward(True)
+                #reward = self.GetTurnReward()
                 return nextState, reward, True
             else:
-                self.GetCards()
-                self.SortCards()
-                self.PlaceCard()
-                nextState = np.array(self.GetState())
-                reward = self.GetTurnReward(False)
                 return nextState, reward, False
 
     #Method to let Model train against itself
     #def TurnSelf(self):
+
+    def SetDeck(self):#Because I'm bad at coding
+        self.deck1 = self.decks[0]
+        self.deck2 = self.decks[1]
+        self.deck3 = self.decks[2]
+        self.deck4 = self.decks[3]
 
     def Reset(self):
         self.cards = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104]
