@@ -238,7 +238,7 @@ class Board:
     def Reset(self):
         self.cards = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104]
         #self.cards = []
-        self.possibleCards = cards.copy()
+        self.possibleCards = self.cards.copy()
         self.played = []
         self.deck1 = []
         self.deck2 = []
@@ -257,11 +257,12 @@ class Board:
         return state
 
     def AIPlay(self, player):
-        card = player.SelectBest(self.possibleCards, self.decks)
+        player.SelectBest(self.possibleCards, self.decks)
 
 class Hand:
     def __init__(self, _name):
         self.name = _name
+        self.numberOfPlayers = 5
         self.Reset()
     
     def Reset(self):
@@ -368,14 +369,32 @@ class Hand:
             self.playerCards.remove(card)
         difs = self.GetDeckDif(decks, self.cards)
         numBetween = self.CardRange(difs, decks)
-        probs = CalcProbPerDeck(numBetween)
+        probs = self.CalcProbPerDeck(numBetween)
         penArray = self.CalcDeckPen(decks)
+        bestCards = self.CalcBestChance(penArray, probs, decks)
+        #bestUnder = self.CalcUnder
+        bestCards.append(self.CalcUnder)
+        self.FindCard(bestCards, decks)
+
+    def FindCard(self, bestCards, decks):
+        index = bestCards.index(min(bestCards))
+        if index == 4:
+            self.selected = min(self.cards)
+            del self.cards[index]
+        else:
+            dCard = decks[index][-1]
+            cCard = 105
+            for card in self.cards:
+                if card > dCard and card < cCard:
+                    cCard = card
+            self.selected = cCard
+            self.cards.remove(cCard)
 
 
     def CalcProbPerDeck(self, numBetween):
         prob = [0, 0, 0, 0]
         for i in range(0, 4):
-            _prob = numBetween[i] / len(self.playerCards)
+            _prob = (numBetween[i] / len(self.playerCards)) * self.numberOfPlayers
             prob[i] = _prob
         return prob
 
@@ -385,6 +404,47 @@ class Hand:
             pen = self.CalcTurnPen(deck)
             penArray.append(pen)
         return penArray
+
+    def CalcBestChance(self, penArray, probs, decks):
+        array = []
+        for i in range(0, 4):
+            pen = penArray[i]
+            if len(decks[i]) == 5:
+                array.append((pen/10))
+            else:
+                prob = probs[i]
+                x = (pen/10 + prob) * prob
+                array.append(x)
+        return array
+    
+    def GetLowest(self, decks):
+        lowest = 105
+        index = 10
+        for i in range(0, 4):
+            if decks[i][-1] < 105:
+                lowest = decks[i][-1]
+                index = i
+        return lowest, index
+
+
+    def CalcUnder(self, decks):
+        lowest, index = self.GetLowest(decks)
+        if index != 10:
+            num = 0
+            for card in self.playerCards:
+                if card < lowest:
+                    num += 1
+                else:
+                    break
+            prob = (num / len(self.playerCards)) * self.numberOfPlayers
+            pen = self.CalcTurnPen(decks[index])
+            value = (pen/10 + prob) * prob
+            return value
+        else:
+            return 30
+
+
+        
 
     #def CalcLowestProb(self, decks):
         
