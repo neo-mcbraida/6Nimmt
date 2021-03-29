@@ -11,10 +11,12 @@ class Board:
     def Mix(self):
         random.shuffle(self.cards)
         self.deck1.append(self.cards[0])
+        self.possibleCards.remove(card)
         self.deck2.append(self.cards[1])
         self.deck3.append(self.cards[2])
         self.deck4.append(self.cards[3])
         del self.cards[:4]
+        del self.possibleCards[:4]
         for i in range(6):
             self.players[i].Reset()
             self.players[i].cards = self.cards[:10]
@@ -129,6 +131,7 @@ class Board:
 
         self.decks[index] = []
         self.decks[index].append(card)
+        self.possibleCards.remove(card)
 
     def AddToRow(self, deck, index, card, player):
         if index == -1:
@@ -137,8 +140,10 @@ class Board:
         elif len(deck) == 5:
             deck.append(card)
             self.GivePenalty(player, deck)
+            self.possibleCards.remove(card)
         else:
             deck.append(card)
+            self.possibleCards.remove(card)
 
     def GetSmallestDeck(self, decks):#returns deck with smallest penalty
         lowestPen = 100
@@ -233,6 +238,7 @@ class Board:
     def Reset(self):
         self.cards = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104]
         #self.cards = []
+        self.possibleCards = cards.copy()
         self.played = []
         self.deck1 = []
         self.deck2 = []
@@ -250,6 +256,9 @@ class Board:
         state = np.array(self.GetState(self.p1))
         return state
 
+    def AIPlay(self, player):
+        card = player.SelectBest(self.possibleCards, self.decks)
+
 class Hand:
     def __init__(self, _name):
         self.name = _name
@@ -261,6 +270,7 @@ class Hand:
         self.penaltyCards = []
         self.penalty = 0
         self.selected = 0
+        self.playerCards = []
 
     def RandomSelect(self):
         #print(self.cards)
@@ -327,6 +337,65 @@ class Hand:
             if index < len(self.cards):
                 card = self.cards[index]
         self.selected = card
+
+    def GetDeckDif(self, decks, cards):
+        deckDifs = [100, 100, 100, 100]
+        cardDifs = [0, 0, 0, 0]
+        for i in range (0, 4):
+            for card in cards:
+                dif = card - decks[i]
+                if dif > 0 and dif < deckDifs[i]:
+                    deckDifs[i] = dif
+                    cardDifs[i] = card 
+        return deckDifs
+
+    def CardRange(self, difs, decks):
+        numBetween = [0, 0, 0, 0]
+        for i in range (0 ,4):
+            dif = difs[i]
+            card = decks[i][-1]
+            u = 0
+            while u < dif:
+                card += 1
+                u += 1
+                if card in self.playerCards:
+                    numBetween[i] += 1
+        return numBetween
+
+    def SelectBest(self, playercards, decks):
+        self.playerCards = playercards.copy()
+        for card in self.cards:
+            self.playerCards.remove(card)
+        difs = self.GetDeckDif(decks, self.cards)
+        numBetween = self.CardRange(difs, decks)
+        probs = CalcProbPerDeck(numBetween)
+        penArray = self.CalcDeckPen(decks)
+
+
+    def CalcProbPerDeck(self, numBetween):
+        prob = [0, 0, 0, 0]
+        for i in range(0, 4):
+            _prob = numBetween[i] / len(self.playerCards)
+            prob[i] = _prob
+        return prob
+
+    def CalcDeckPen(self, decks):
+        penArray = []
+        for deck in decks:
+            pen = self.CalcTurnPen(deck)
+            penArray.append(pen)
+        return penArray
+
+    #def CalcLowestProb(self, decks):
+        
+            
+    #def GetLowestProb(self, probs):
+        
+
+    
+
+
+    
         
 
 env = Board()
