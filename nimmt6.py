@@ -11,7 +11,7 @@ class Board:
     def Mix(self):
         random.shuffle(self.cards)
         self.deck1.append(self.cards[0])
-        self.possibleCards.remove(card)
+        #self.possibleCards.remove(card)
         self.deck2.append(self.cards[1])
         self.deck3.append(self.cards[2])
         self.deck4.append(self.cards[3])
@@ -67,31 +67,35 @@ class Board:
             self.Turn()
 
     def GetState(self, player):
-        temp1 = self.AddZeroes(self.deck1)
-        self.AddNegOne(temp1)
-        temp2 = self.AddZeroes(self.deck2)
-        self.AddNegOne(temp2)
-        temp3 = self.AddZeroes(self.deck3)
-        self.AddNegOne(temp3)
-        temp4 = self.AddZeroes(self.deck4)
-        self.AddNegOne(temp4)
-        tempplayer = self.AddZeroes(player.cards)
-        state = [temp1, temp2, temp3, temp4, tempplayer]
+        temp1 = self.AddNegOne(self.deck1)
+        #self.AddNegOne(temp1)
+        temp2 = self.AddNegOne(self.deck2)
+        #self.AddNegOne(temp2)
+        temp3 = self.AddNegOne(self.deck3)
+        #self.AddNegOne(temp3)
+        temp4 = self.AddNegOne(self.deck4)
+        #self.AddNegOne(temp4)
+        tempplayer = self.AddNegOne(player.cards)
+        #state = [temp1, temp2, temp3, temp4, tempplayer]
+        state = np.concatenate((temp1, temp2, temp3, temp4, tempplayer))
         #print(state)
         return state
 
-    def AddZeroes(self, array):
+    def AddNegOne(self, array):
         temp = array.copy()
-        num = 10 - len(temp)
+        if array == self.p1.cards:
+            num = 10 - len(temp)
+        else:
+            num = 6 - len(temp)
         i = 0
         while i < num:
-            temp.append(0)
+            temp.append(-1)
             i += 1
         return temp
 
-    def AddNegOne(self, array):
-        if array[4] == 0:
-            array[4] = -1
+    #def AddNegOne(self, array):
+    #    if array[4] == 0:
+    #        array[4] = -1
 
     def StartGame(self):
         #self.cards = self.pHolder
@@ -131,7 +135,7 @@ class Board:
 
         self.decks[index] = []
         self.decks[index].append(card)
-        self.possibleCards.remove(card)
+        #self.possibleCards.remove(card)
 
     def AddToRow(self, deck, index, card, player):
         if index == -1:
@@ -140,10 +144,10 @@ class Board:
         elif len(deck) == 5:
             deck.append(card)
             self.GivePenalty(player, deck)
-            self.possibleCards.remove(card)
+            #self.possibleCards.remove(card)
         else:
             deck.append(card)
-            self.possibleCards.remove(card)
+            #self.possibleCards.remove(card)
 
     def GetSmallestDeck(self, decks):#returns deck with smallest penalty
         lowestPen = 100
@@ -334,7 +338,7 @@ class Hand:
     def AIOpSelect(self, state):
         card = 0
         while card == 0:
-            index = AIOpponent.AIMove(state)
+            index = AIOpponent.RandomMove(self.cards)###change
             if index < len(self.cards):
                 card = self.cards[index]
         self.selected = card
@@ -405,51 +409,10 @@ class Hand:
             penArray.append(pen)
         return penArray
 
-    def CalcBestChance(self, penArray, probs, decks):
-        array = []
-        for i in range(0, 4):
-            pen = penArray[i]
-            if len(decks[i]) == 5:
-                array.append((pen/10))
-            else:
-                prob = probs[i]
-                x = (pen/10 + prob) * prob
-                array.append(x)
-        return array
+
     
-    def GetLowest(self, decks):
-        lowest = 105
-        index = 10
-        for i in range(0, 4):
-            if decks[i][-1] < 105:
-                lowest = decks[i][-1]
-                index = i
-        return lowest, index
 
 
-    def CalcUnder(self, decks):
-        lowest, index = self.GetLowest(decks)
-        if index != 10:
-            num = 0
-            for card in self.playerCards:
-                if card < lowest:
-                    num += 1
-                else:
-                    break
-            prob = (num / len(self.playerCards)) * self.numberOfPlayers
-            pen = self.CalcTurnPen(decks[index])
-            value = (pen/10 + prob) * prob
-            return value
-        else:
-            return 30
-
-
-        
-
-    #def CalcLowestProb(self, decks):
-        
-            
-    #def GetLowestProb(self, probs):
         
 
     

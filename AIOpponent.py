@@ -5,6 +5,8 @@ from tensorflow import keras
 from tensorflow.keras import layers
 import numpy as np
 
+import random
+
 checkpoint_path = "Weights.ckpt"
 checkpoint_dir = os.path.dirname(checkpoint_path)
 
@@ -23,5 +25,10 @@ def AIMove(state):
     action = tf.argmax(action_probs[0]).numpy()
     action = np.argmax(action)
     return action
+
+def RandomMove(cards):
+    x = len(cards) - 1
+    x = random.randint(0, x)
+    return x
 
 

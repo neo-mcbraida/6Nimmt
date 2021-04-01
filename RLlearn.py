@@ -38,17 +38,17 @@ is chosen by selecting the larger of the four Q-values predicted in the output l
 num_actions = 10
 
 
-#def create_q_model():
-    #inputs = layers.Input(shape=(5, 10))
+def create_q_model():
+    inputs = layers.Input(shape=(34))
     #add masking
-    #layer1 = layers.Dense(64, activation="relu")(inputs)#Hopefully to estimate penalty of each deck
-    #layer2 = layers.Dense(64, activation="relu")(layer1)#Hopefully to estimate which will be picked up 
-    #layer3 = layers.Dense(32, activation="relu")(layer2)#Hopefully to estimate which card is closest to best deck
-    #layer4 = layers.Dense(16, activation="relu")(layer3)#Hopefully to estimate best card
+    layer1 = layers.Dense(64, activation="relu")(inputs)#Hopefully to estimate penalty of each deck
+    layer2 = layers.Dense(64, activation="relu")(layer1)#Hopefully to estimate which will be picked up 
+    layer3 = layers.Dense(32, activation="relu")(layer2)#Hopefully to estimate which card is closest to best deck
+    layer4 = layers.Dense(16, activation="relu")(layer3)#Hopefully to estimate best card
 
-    #action = layers.Dense(num_actions, activation="linear")(layer4)
+    action = layers.Dense(num_actions, activation="linear")(layer4)
 
-    #return keras.Model(inputs=inputs, outputs=action)
+    return keras.Model(inputs=inputs, outputs=action)
 
 
 
@@ -71,11 +71,11 @@ num_actions = 10
 
 # The first model makes the predictions for Q-values which are used to
 # make a action.
-#model = create_q_model()
+model = create_q_model()
 # Build a target model for the prediction of future rewards.
 # The weights of a target model get updated every 10000 steps thus when the
 # loss between the Q-values is calculated the target Q-value is stable.
-#model_target = create_q_model()
+model_target = create_q_model()
 
 
 #model.summary()
@@ -119,8 +119,8 @@ checkpoint_target_path = "Weights_Target.h5"
 cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, save_weights_only=True, verbose=1)
 
 # Loads the weights
-model = tf.keras.models.load_model("Weights.h5")   # model.load_weights(checkpoint_path)
-model_target = tf.keras.models.load_model("Weights_Target.h5")#model_target.load_weights(checkpoint_target_path)
+#model = tf.keras.models.load_model("Weights.h5")   # model.load_weights(checkpoint_path)
+#model_target = tf.keras.models.load_model("Weights_Target.h5")#model_target.load_weights(checkpoint_target_path)
 
 model.summary()
 val = 10
@@ -207,7 +207,7 @@ while True:  # Run until solved
                 q_values = model(state_sample)
                 #print(model(state_sample))
                 # Apply the masks to the Q-values to get the Q-value for action taken
-                #q_action = tf.reduce_sum(tf.multiply(q_values, masks), axis=2)
+                q_action = tf.reduce_sum(tf.multiply(q_values, masks), axis=1)
                 
                 q_action = tf.reduce_sum(q_values)
                 # Calculate loss between new Q-value and old Q-value
