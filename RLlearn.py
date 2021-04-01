@@ -71,11 +71,11 @@ def create_q_model():
 
 # The first model makes the predictions for Q-values which are used to
 # make a action.
-model = create_q_model()
+#model = create_q_model()
 # Build a target model for the prediction of future rewards.
 # The weights of a target model get updated every 10000 steps thus when the
 # loss between the Q-values is calculated the target Q-value is stable.
-model_target = create_q_model()
+#model_target = create_q_model()
 
 
 #model.summary()
@@ -119,8 +119,8 @@ checkpoint_target_path = "Weights_Target.h5"
 cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, save_weights_only=True, verbose=1)
 
 # Loads the weights
-#model = tf.keras.models.load_model("Weights.h5")   # model.load_weights(checkpoint_path)
-#model_target = tf.keras.models.load_model("Weights_Target.h5")#model_target.load_weights(checkpoint_target_path)
+model = tf.keras.models.load_model("Weights.h5")   # model.load_weights(checkpoint_path)
+model_target = tf.keras.models.load_model("Weights_Target.h5")#model_target.load_weights(checkpoint_target_path)
 
 model.summary()
 val = 10
