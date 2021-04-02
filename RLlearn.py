@@ -18,7 +18,7 @@ epsilon_max = 1.0  # Maximum epsilon greedy parameter
 epsilon_interval = (
     epsilon_max - epsilon_min
 )  # Rate at which to reduce chance of random action being taken
-batch_size = 32  # Size of batch taken from replay buffer
+batch_size = 100  # Size of batch taken from replay buffer
 max_steps_per_episode = 10000
 
 # Use the Baseline Atari environment because of Deepmind helper functions
@@ -47,6 +47,8 @@ def create_q_model():
     layer4 = layers.Dense(16, activation="relu")(layer3)#Hopefully to estimate best card
 
     action = layers.Dense(num_actions, activation="linear")(layer4)
+
+   # model.compile(optimizer="adam", loss="mean_squared_error")
 
     return keras.Model(inputs=inputs, outputs=action)
 
@@ -84,7 +86,15 @@ def create_q_model():
 """
 # In the Deepmind paper they use RMSProp however then Adam optimizer
 # improves training time
+# Loads the weights
+
 optimizer = keras.optimizers.Adam(learning_rate=0.00025, clipnorm=1.0)
+
+model = keras.models.load_model("Weights.h5")   # model.load_weights(checkpoint_path)
+model_target = keras.models.load_model("Weights_Target.h5")#model_target.load_weights(checkpoint_target_path)
+
+model.summary()
+
 
 # Experience replay buffers
 action_history = []
@@ -112,17 +122,10 @@ loss_function = keras.losses.Huber()
 # Saves model every 2,000 episodes
 eps_since_save = 0
 
-checkpoint_path = "Weights.h5"
-checkpoint_target_path = "Weights_Target.h5"
-
 # Create a callback that saves the model's weights
-cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, save_weights_only=True, verbose=1)
+#cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path, save_weights_only=True, verbose=1)
 
-# Loads the weights
-model = tf.keras.models.load_model("Weights.h5")   # model.load_weights(checkpoint_path)
-model_target = tf.keras.models.load_model("Weights_Target.h5")#model_target.load_weights(checkpoint_target_path)
 
-model.summary()
 val = 10
 
 while True:  # Run until solved
@@ -136,15 +139,15 @@ while True:  # Run until solved
 
         # Use epsilon-greedy for exploration
         #num = random.randint(0, 40)
-        if frame_count < epsilon_random_frames or epsilon > np.random.rand(1)[0]:
+        if frame_count < epsilon_random_frames or epsilon > np.random.rand(1)[0]:###
         #if num == 1:
             # Take random action
-            action = np.random.choice(num_actions)
-            val += 1
+            action = np.random.choice(num_actions)###
+            #val += 1####
             #print(action)
-        else:
-            # Predict action Q-values
-            # From environment state
+        else:####
+            #Predict action Q-values
+            #From environment state
             state_tensor = tf.convert_to_tensor(state)
             state_tensor = tf.expand_dims(state_tensor, 0)
             action_probs = model(state_tensor, training=False)
@@ -152,7 +155,7 @@ while True:  # Run until solved
             # Take best action
             action = tf.argmax(action_probs[0]).numpy()
             action = np.argmax(action)
-            #print(action)
+                #print(action)
         
         #print(action)
         # Decay probability of taking random action
